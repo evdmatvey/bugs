@@ -1,3 +1,50 @@
 <resources>
     <string name="app_name">Bugs</string>
+
+    <string name="registration_title">Регистрация игрока</string>
+    <string name="registration_subtitle">Заполните профиль перед началом игры</string>
+
+    <string name="registration_full_name_hint">ФИО</string>
+
+    <string name="registration_gender_label">Пол</string>
+    <string name="registration_gender_male">Мужской</string>
+    <string name="registration_gender_female">Женский</string>
+
+    <string name="registration_course_hint">Курс</string>
+    <string-array name="registration_courses">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string name="registration_difficulty_label">Сложность игры</string>
+    <string name="registration_difficulty_easy">Легко</string>
+    <string name="registration_difficulty_medium">Средне</string>
+    <string name="registration_difficulty_hard">Сложно</string>
+
+    <string name="registration_birth_date_label">Дата рождения</string>
+
+    <string name="registration_submit">Зарегистрировать игрока</string>
+
+    <string name="registration_full_name_required">Укажите ФИО</string>
+    <string name="registration_gender_required">Выберите пол</string>
+    <string name="registration_course_required">Выберите курс</string>
+    <string name="registration_birth_date_required">Укажите дату рождения</string>
+
+    <string name="registration_result_title">Игрок зарегистрирован</string>
+    <string name="registration_result_format">ФИО: %1$s\nПол: %2$s\nКурс: %3$d\nСложность: %4$s\nДата рождения: %5$s\nЗнак зодиака: %6$s</string>
+
+    <string name="zodiac_capricorn">Козерог</string>
+    <string name="zodiac_aquarius">Водолей</string>
+    <string name="zodiac_pisces">Рыбы</string>
+    <string name="zodiac_aries">Овен</string>
+    <string name="zodiac_taurus">Телец</string>
+    <string name="zodiac_gemini">Близнецы</string>
+    <string name="zodiac_cancer">Рак</string>
+    <string name="zodiac_leo">Лев</string>
+    <string name="zodiac_virgo">Дева</string>
+    <string name="zodiac_libra">Весы</string>
+    <string name="zodiac_scorpio">Скорпион</string>
+    <string name="zodiac_sagittarius">Стрелец</string>
 </resources>
