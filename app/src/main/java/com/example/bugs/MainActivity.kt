@@ -5,6 +5,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.bugs.feature.authors.ui.AuthorsFragment
 import com.example.bugs.feature.registration.ui.RegistrationFragment
 import com.example.bugs.feature.rules.ui.RulesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -42,6 +43,21 @@ class MainActivity : AppCompatActivity() {
                                 .replace(
                                     R.id.main_fragment_container,
                                     RulesFragment()
+                                )
+                                .commit()
+                        }
+                        true
+                    }
+
+                    R.id.navigation_authors -> {
+                        if (supportFragmentManager
+                                .findFragmentById(R.id.main_fragment_container) !is AuthorsFragment
+                        ) {
+                            supportFragmentManager
+                                .beginTransaction()
+                                .replace(
+                                    R.id.main_fragment_container,
+                                    AuthorsFragment()
                                 )
                                 .commit()
                         }
