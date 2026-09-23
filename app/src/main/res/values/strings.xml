@@ -4,6 +4,9 @@
     <string name="rules_title">Правила игры</string>
     <string name="rules_subtitle">Коротко о подготовке, ходе игры и победе</string>
     <string name="navigation_registration">Регистрация</string>
+    <string name="navigation_authors">Авторы</string>
+    <string name="authors_title">Авторы</string>
+    <string name="author_matvey_evdokimov">Евдокимов Матвей</string>
 
     <string name="registration_title">Регистрация игрока</string>
     <string name="registration_subtitle">Заполните профиль перед началом игры</string>

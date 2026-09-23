@@ -8,4 +8,8 @@
         android:id="@+id/navigation_rules"
         android:icon="@drawable/ic_menu_book_24"
         android:title="@string/navigation_rules" />
+    <item
+        android:id="@+id/navigation_authors"
+        android:icon="@drawable/ic_group_24"
+        android:title="@string/navigation_authors" />
 </menu>
