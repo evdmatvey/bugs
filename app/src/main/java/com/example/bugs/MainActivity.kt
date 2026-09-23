@@ -8,6 +8,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.bugs.feature.authors.ui.AuthorsFragment
 import com.example.bugs.feature.registration.ui.RegistrationFragment
 import com.example.bugs.feature.rules.ui.RulesFragment
+import com.example.bugs.feature.settings.ui.SettingsFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -58,6 +59,21 @@ class MainActivity : AppCompatActivity() {
                                 .replace(
                                     R.id.main_fragment_container,
                                     AuthorsFragment()
+                                )
+                                .commit()
+                        }
+                        true
+                    }
+
+                    R.id.navigation_settings -> {
+                        if (supportFragmentManager
+                                .findFragmentById(R.id.main_fragment_container) !is SettingsFragment
+                        ) {
+                            supportFragmentManager
+                                .beginTransaction()
+                                .replace(
+                                    R.id.main_fragment_container,
+                                    SettingsFragment()
                                 )
                                 .commit()
                         }
