@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.bugs.feature.registration.ui.RegistrationFragment
+import com.example.bugs.feature.rules.ui.RulesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -26,6 +27,21 @@ class MainActivity : AppCompatActivity() {
                                 .replace(
                                     R.id.main_fragment_container,
                                     RegistrationFragment()
+                                )
+                                .commit()
+                        }
+                        true
+                    }
+
+                    R.id.navigation_rules -> {
+                        if (supportFragmentManager
+                                .findFragmentById(R.id.main_fragment_container) !is RulesFragment
+                        ) {
+                            supportFragmentManager
+                                .beginTransaction()
+                                .replace(
+                                    R.id.main_fragment_container,
+                                    RulesFragment()
                                 )
                                 .commit()
                         }
