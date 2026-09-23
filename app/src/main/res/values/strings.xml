@@ -5,6 +5,7 @@
     <string name="rules_subtitle">Коротко о подготовке, ходе игры и победе</string>
     <string name="navigation_registration">Регистрация</string>
     <string name="navigation_authors">Авторы</string>
+    <string name="navigation_settings">Настройки</string>
     <string name="authors_title">Авторы</string>
     <string name="author_matvey_evdokimov">Евдокимов Матвей</string>
 
@@ -54,4 +55,41 @@
     <string name="zodiac_libra">Весы</string>
     <string name="zodiac_scorpio">Скорпион</string>
     <string name="zodiac_sagittarius">Стрелец</string>
+
+    <string name="settings_title">Настройки игры</string>
+    <string name="settings_subtitle">Выберите параметры игрового раунда</string>
+    <string name="settings_speed">Скорость игры</string>
+    <string name="settings_max_cockroaches">Максимум тараканов на экране</string>
+    <string name="settings_bonus_interval">Интервал появления бонусов</string>
+    <string name="settings_round_duration">Длительность раунда</string>
+    <string name="settings_apply">Применить настройки</string>
+    <string name="settings_applied">Настройки применены</string>
+
+    <string-array name="settings_speed_values">
+        <item>0,5×</item>
+        <item>1×</item>
+        <item>1,5×</item>
+        <item>2×</item>
+    </string-array>
+
+    <string-array name="settings_cockroach_values">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+    </string-array>
+
+    <string-array name="settings_bonus_interval_values">
+        <item>5 секунд</item>
+        <item>10 секунд</item>
+        <item>15 секунд</item>
+        <item>30 секунд</item>
+    </string-array>
+
+    <string-array name="settings_round_duration_values">
+        <item>30 секунд</item>
+        <item>60 секунд</item>
+        <item>90 секунд</item>
+        <item>120 секунд</item>
+    </string-array>
 </resources>
