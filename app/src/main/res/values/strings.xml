@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Bugs</string>
+    <string name="navigation_rules">Правила</string>
+    <string name="rules_title">Правила игры</string>
+    <string name="rules_subtitle">Коротко о подготовке, ходе игры и победе</string>
     <string name="navigation_registration">Регистрация</string>
 
     <string name="registration_title">Регистрация игрока</string>

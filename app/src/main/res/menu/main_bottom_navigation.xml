@@ -4,4 +4,8 @@
         android:id="@+id/navigation_registration"
         android:icon="@drawable/ic_person_add_24"
         android:title="@string/navigation_registration" />
+    <item
+        android:id="@+id/navigation_rules"
+        android:icon="@drawable/ic_menu_book_24"
+        android:title="@string/navigation_rules" />
 </menu>
