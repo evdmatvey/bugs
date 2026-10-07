@@ -5,6 +5,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import com.example.bugs.feature.authors.ui.AuthorsFragment
 import com.example.bugs.feature.registration.ui.RegistrationFragment
 import com.example.bugs.feature.rules.ui.RulesFragment
@@ -17,82 +20,37 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        findViewById<BottomNavigationView>(R.id.main_bottom_navigation)
-            .setOnItemSelectedListener { item ->
-                when (item.itemId) {
-                    R.id.navigation_registration -> {
-                        if (supportFragmentManager
-                                .findFragmentById(R.id.main_fragment_container) !is RegistrationFragment
-                        ) {
-                            supportFragmentManager
-                                .beginTransaction()
-                                .replace(
-                                    R.id.main_fragment_container,
-                                    RegistrationFragment()
-                                )
-                                .commit()
-                        }
-                        true
-                    }
+        val navigation = findViewById<BottomNavigationView>(R.id.main_bottom_navigation)
+        val viewPager = findViewById<ViewPager2>(R.id.main_view_pager)
+        val navigationItems = intArrayOf(
+            R.id.navigation_registration,
+            R.id.navigation_rules,
+            R.id.navigation_authors,
+            R.id.navigation_settings
+        )
 
-                    R.id.navigation_rules -> {
-                        if (supportFragmentManager
-                                .findFragmentById(R.id.main_fragment_container) !is RulesFragment
-                        ) {
-                            supportFragmentManager
-                                .beginTransaction()
-                                .replace(
-                                    R.id.main_fragment_container,
-                                    RulesFragment()
-                                )
-                                .commit()
-                        }
-                        true
-                    }
+        viewPager.adapter = object : FragmentStateAdapter(this) {
+            override fun getItemCount() = navigationItems.size
 
-                    R.id.navigation_authors -> {
-                        if (supportFragmentManager
-                                .findFragmentById(R.id.main_fragment_container) !is AuthorsFragment
-                        ) {
-                            supportFragmentManager
-                                .beginTransaction()
-                                .replace(
-                                    R.id.main_fragment_container,
-                                    AuthorsFragment()
-                                )
-                                .commit()
-                        }
-                        true
-                    }
-
-                    R.id.navigation_settings -> {
-                        if (supportFragmentManager
-                                .findFragmentById(R.id.main_fragment_container) !is SettingsFragment
-                        ) {
-                            supportFragmentManager
-                                .beginTransaction()
-                                .replace(
-                                    R.id.main_fragment_container,
-                                    SettingsFragment()
-                                )
-                                .commit()
-                        }
-                        true
-                    }
-
-                    else -> false
-                }
+            override fun createFragment(position: Int): Fragment = when (position) {
+                0 -> RegistrationFragment()
+                1 -> RulesFragment()
+                2 -> AuthorsFragment()
+                else -> SettingsFragment()
             }
-
-        if (savedInstanceState == null) {
-            supportFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.main_fragment_container,
-                    RegistrationFragment()
-                )
-                .commit()
         }
+
+        navigation.setOnItemSelectedListener { item ->
+            val position = navigationItems.indexOf(item.itemId)
+            if (position >= 0) viewPager.currentItem = position
+            position >= 0
+        }
+
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                navigation.selectedItemId = navigationItems[position]
+            }
+        })
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
