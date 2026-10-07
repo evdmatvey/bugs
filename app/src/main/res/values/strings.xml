@@ -10,7 +10,7 @@
     <string name="author_matvey_evdokimov">Евдокимов Матвей</string>
 
     <string name="registration_title">Регистрация игрока</string>
-    <string name="registration_subtitle">Заполните профиль перед началом игры</string>
+    <string name="registration_subtitle">Заполните данные профиля игрока</string>
 
     <string name="registration_full_name_hint">ФИО</string>
 
@@ -59,8 +59,8 @@
     <string name="settings_title">Настройки игры</string>
     <string name="settings_subtitle">Выберите параметры игрового раунда</string>
     <string name="settings_speed">Скорость игры</string>
-    <string name="settings_max_cockroaches">Максимум тараканов на экране</string>
-    <string name="settings_bonus_interval">Интервал появления бонусов</string>
+    <string name="settings_max_cockroaches">Максимум жуков на экране</string>
+    <string name="settings_bonus_interval">Интервал появления редкого жука</string>
     <string name="settings_round_duration">Длительность раунда</string>
     <string name="settings_apply">Применить настройки</string>
     <string name="settings_applied">Настройки применены</string>
