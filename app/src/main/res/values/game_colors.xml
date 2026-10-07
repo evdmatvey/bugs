@@ -1,0 +1,5 @@
+<resources>
+    <color name="bug_normal">#29333D</color>
+    <color name="bug_fast">#286544</color>
+    <color name="bug_rare">#805A12</color>
+</resources>
