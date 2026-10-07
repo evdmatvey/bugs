@@ -39,17 +39,23 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
         val fullNameLayout =
             view.findViewById<TextInputLayout>(R.id.registration_full_name_layout)
         val fullNameInput = view.findViewById<TextInputEditText>(R.id.registration_full_name)
+
         val genderGroup = view.findViewById<RadioGroup>(R.id.registration_gender)
         val genderError = view.findViewById<TextView>(R.id.registration_gender_error)
+
         val courseLayout =
             view.findViewById<TextInputLayout>(R.id.registration_course_layout)
         val courseInput = view.findViewById<MaterialAutoCompleteTextView>(R.id.registration_course)
+
         val difficultyInput = view.findViewById<SeekBar>(R.id.registration_difficulty)
+
         val birthDateLayout =
             view.findViewById<TextInputLayout>(R.id.registration_birth_date_layout)
         val birthDateInput =
             view.findViewById<TextInputEditText>(R.id.registration_birth_date)
+
         val submitButton = view.findViewById<View>(R.id.registration_submit)
+
         val result = view.findViewById<View>(R.id.registration_result)
         val resultText = view.findViewById<TextView>(R.id.registration_result_text)
         val zodiacImage = view.findViewById<ImageView>(R.id.registration_zodiac_image)
@@ -134,12 +140,15 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
                     } else {
                         null
                     }
+
                     genderError.isVisible = state.genderError
+
                     courseLayout.error = if (state.courseError) {
                         getString(R.string.registration_course_required)
                     } else {
                         null
                     }
+
                     birthDateLayout.error = if (state.birthDateError) {
                         getString(R.string.registration_birth_date_required)
                     } else {
