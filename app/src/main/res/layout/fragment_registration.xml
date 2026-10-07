@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/registration_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -24,7 +25,7 @@
             android:layout_marginTop="8dp"
             android:text="@string/registration_subtitle"
             android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurface"/>
+            android:textColor="?attr/colorOnSurface" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/registration_full_name_layout"
@@ -60,14 +61,14 @@
                 android:id="@+id/registration_gender_male"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/registration_gender_male"/>
+                android:text="@string/registration_gender_male" />
 
             <RadioButton
                 android:id="@+id/registration_gender_female"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:text="@string/registration_gender_female"/>
+                android:text="@string/registration_gender_female" />
 
         </RadioGroup>
 
@@ -93,7 +94,7 @@
                 android:id="@+id/registration_course"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none"/>
+                android:inputType="none" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
