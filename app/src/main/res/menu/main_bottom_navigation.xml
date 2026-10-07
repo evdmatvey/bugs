@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/navigation_game"
+        android:icon="@drawable/ic_bug_24"
+        android:title="@string/navigation_game" />
+
+    <item
         android:id="@+id/navigation_registration"
         android:icon="@drawable/ic_person_add_24"
         android:title="@string/navigation_registration" />
+
     <item
         android:id="@+id/navigation_rules"
         android:icon="@drawable/ic_menu_book_24"
         android:title="@string/navigation_rules" />
+
     <item
         android:id="@+id/navigation_authors"
         android:icon="@drawable/ic_group_24"
         android:title="@string/navigation_authors" />
+
     <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings_24"

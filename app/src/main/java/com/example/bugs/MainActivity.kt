@@ -9,12 +9,14 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.bugs.feature.authors.ui.AuthorsFragment
+import com.example.bugs.feature.game.ui.GameFragment
 import com.example.bugs.feature.registration.ui.RegistrationFragment
 import com.example.bugs.feature.rules.ui.RulesFragment
 import com.example.bugs.feature.settings.ui.SettingsFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -22,7 +24,9 @@ class MainActivity : AppCompatActivity() {
 
         val navigation = findViewById<BottomNavigationView>(R.id.main_bottom_navigation)
         val viewPager = findViewById<ViewPager2>(R.id.main_view_pager)
+
         val navigationItems = intArrayOf(
+            R.id.navigation_game,
             R.id.navigation_registration,
             R.id.navigation_rules,
             R.id.navigation_authors,
@@ -33,28 +37,35 @@ class MainActivity : AppCompatActivity() {
             override fun getItemCount() = navigationItems.size
 
             override fun createFragment(position: Int): Fragment = when (position) {
-                0 -> RegistrationFragment()
-                1 -> RulesFragment()
-                2 -> AuthorsFragment()
+                0 -> GameFragment()
+                1 -> RegistrationFragment()
+                2 -> RulesFragment()
+                3 -> AuthorsFragment()
                 else -> SettingsFragment()
             }
         }
 
         navigation.setOnItemSelectedListener { item ->
             val position = navigationItems.indexOf(item.itemId)
-            if (position >= 0) viewPager.currentItem = position
+            if (position >= 0 && position != viewPager.currentItem) {
+                viewPager.setCurrentItem(position, false)
+            }
+
             position >= 0
         }
 
-        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                navigation.selectedItemId = navigationItems[position]
+        viewPager.registerOnPageChangeCallback(
+            object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    navigation.selectedItemId = navigationItems[position]
+                }
             }
-        })
+        )
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
             insets
         }
     }
