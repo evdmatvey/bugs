@@ -16,7 +16,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
 
-        // Android restores dropdown text with filtering; keep all selectable options.
         listOf(
             R.id.settings_speed,
             R.id.settings_max_cockroaches,
