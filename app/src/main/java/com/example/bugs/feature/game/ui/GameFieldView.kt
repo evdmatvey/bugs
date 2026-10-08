@@ -159,7 +159,6 @@ class GameFieldView @JvmOverloads constructor(
         canvas.drawRoundRect(0f, 0f, GameRound.WIDTH, GameRound.HEIGHT, 40f, 40f, paint)
         canvas.clipRect(0f, 0f, GameRound.WIDTH, GameRound.HEIGHT)
 
-        // A faint field texture stays behind the targets in both themes.
         paint.color = foreground
         paint.alpha = 18
         for (x in 80..920 step 120) {

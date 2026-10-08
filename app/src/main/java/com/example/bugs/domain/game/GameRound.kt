@@ -175,7 +175,6 @@ class GameRound(
         }
     }
 
-    /** null means the tap was outside the field or the round has ended. */
     fun tap(x: Float, y: Float): Int? {
         if (
             finished ||
