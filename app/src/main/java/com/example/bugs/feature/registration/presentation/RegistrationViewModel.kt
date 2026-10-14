@@ -1,16 +1,25 @@
 package com.example.bugs.feature.registration.presentation
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.bugs.BugsApplication
+import com.example.bugs.data.CreatePlayerResult
 import com.example.bugs.domain.game.GameDifficulty
 import com.example.bugs.domain.player.Gender
 import com.example.bugs.domain.player.Player
+import com.example.bugs.domain.player.cleanPlayerName
+import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.time.LocalDate
+import kotlinx.coroutines.launch
 
-class RegistrationViewModel : ViewModel() {
+class RegistrationViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = (application as BugsApplication).repository
 
     private val _uiState = MutableStateFlow(RegistrationUiState())
 
@@ -20,7 +29,8 @@ class RegistrationViewModel : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 fullName = fullName,
-                fullNameError = false
+                fullNameError = false,
+                duplicatePlayer = false
             )
         }
     }
@@ -53,7 +63,8 @@ class RegistrationViewModel : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 birthDate = birthDate,
-                birthDateError = false
+                birthDateError = false,
+                duplicatePlayer = false
             )
         }
     }
@@ -61,10 +72,12 @@ class RegistrationViewModel : ViewModel() {
     fun onSubmit() {
         val currentState = _uiState.value
 
+        if (currentState.saving || currentState.submittedPlayer != null) return
+
         val fullNameMissing = currentState.fullName.isBlank()
         val genderMissing = currentState.gender == null
-        val courseMissing = currentState.course == null
-        val birthDateMissing = currentState.birthDate == null
+        val courseMissing = currentState.course !in 1..4
+        val birthDateMissing = currentState.birthDate == null || currentState.birthDate.isAfter(LocalDate.now())
 
         if (
             fullNameMissing ||
@@ -85,7 +98,7 @@ class RegistrationViewModel : ViewModel() {
         }
 
         val player = Player(
-            fullName = currentState.fullName.trim(),
+            fullName = cleanPlayerName(currentState.fullName),
             gender = requireNotNull(currentState.gender),
             course = requireNotNull(currentState.course),
             difficulty = currentState.difficulty,
@@ -93,13 +106,32 @@ class RegistrationViewModel : ViewModel() {
         )
 
         _uiState.update {
-            it.copy(
-                submittedPlayer = player,
-                fullNameError = false,
-                genderError = false,
-                courseError = false,
-                birthDateError = false
-            )
+            it.copy(saving = true, saveError = false, duplicatePlayer = false, submittedPlayer = null)
+        }
+
+        viewModelScope.launch {
+            try {
+                when (repository.createPlayer(player)) {
+                    is CreatePlayerResult.Created -> _uiState.update {
+                        it.copy(
+                            saving = false,
+                            submittedPlayer = player,
+                            fullNameError = false,
+                            genderError = false,
+                            courseError = false,
+                            birthDateError = false
+                        )
+                    }
+
+                    is CreatePlayerResult.AlreadyExists -> _uiState.update {
+                        it.copy(saving = false, duplicatePlayer = true)
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                _uiState.update { it.copy(saving = false, saveError = true) }
+            }
         }
     }
 }
