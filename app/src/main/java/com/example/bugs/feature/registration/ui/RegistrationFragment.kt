@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.bugs.R
+import com.example.bugs.core.ui.labelRes
 import com.example.bugs.domain.game.GameDifficulty
 import com.example.bugs.domain.player.Gender
 import com.example.bugs.domain.player.ZodiacSign
@@ -23,9 +24,9 @@ import com.example.bugs.feature.registration.presentation.RegistrationViewModel
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
 
 class RegistrationFragment : Fragment(R.layout.fragment_registration) {
 
@@ -54,7 +55,8 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
         val birthDateInput =
             view.findViewById<TextInputEditText>(R.id.registration_birth_date)
 
-        val submitButton = view.findViewById<View>(R.id.registration_submit)
+        val submitButton = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.registration_submit)
+        val saveError = view.findViewById<TextView>(R.id.registration_save_error)
 
         val result = view.findViewById<View>(R.id.registration_result)
         val resultText = view.findViewById<TextView>(R.id.registration_result_text)
@@ -62,7 +64,15 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
 
         val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
+        val initial = viewModel.uiState.value
+        fullNameInput.setText(initial.fullName)
+        initial.gender?.let {
+            genderGroup.check(if (it == Gender.MALE) R.id.registration_gender_male else R.id.registration_gender_female)
+        }
+        initial.birthDate?.let { birthDateInput.setText(it.format(dateFormatter)) }
+        difficultyInput.progress = initial.difficulty.ordinal
         courseInput.setSimpleItems(R.array.registration_courses)
+        initial.course?.let { courseInput.setText(it.toString(), false) }
 
         fullNameInput.doAfterTextChanged {
             viewModel.onFullNameChanged(it?.toString().orEmpty())
@@ -135,10 +145,10 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    fullNameLayout.error = if (state.fullNameError) {
-                        getString(R.string.registration_full_name_required)
-                    } else {
-                        null
+                    fullNameLayout.error = when {
+                        state.fullNameError -> getString(R.string.registration_full_name_required)
+                        state.duplicatePlayer -> getString(R.string.registration_duplicate_player)
+                        else -> null
                     }
 
                     genderError.isVisible = state.genderError
@@ -154,6 +164,10 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
                     } else {
                         null
                     }
+
+                    submitButton.isEnabled = !state.saving && state.submittedPlayer == null
+                    submitButton.setText(if (state.saving) R.string.data_saving else R.string.registration_submit)
+                    saveError.isVisible = state.saveError
 
                     val player = state.submittedPlayer
                     result.isVisible = player != null
@@ -181,12 +195,6 @@ class RegistrationFragment : Fragment(R.layout.fragment_registration) {
 private fun Gender.labelRes(): Int = when (this) {
     Gender.MALE -> R.string.registration_gender_male
     Gender.FEMALE -> R.string.registration_gender_female
-}
-
-private fun GameDifficulty.labelRes(): Int = when (this) {
-    GameDifficulty.EASY -> R.string.registration_difficulty_easy
-    GameDifficulty.MEDIUM -> R.string.registration_difficulty_medium
-    GameDifficulty.HARD -> R.string.registration_difficulty_hard
 }
 
 private fun ZodiacSign.labelRes(): Int = when (this) {

@@ -3,7 +3,7 @@
     <string name="navigation_rules">Правила</string>
     <string name="rules_title">Правила игры</string>
     <string name="rules_subtitle">Коротко о подготовке, ходе игры и победе</string>
-    <string name="navigation_registration">Регистрация</string>
+    <string name="navigation_registration">Профиль</string>
     <string name="navigation_authors">Авторы</string>
     <string name="navigation_settings">Настройки</string>
     <string name="authors_title">Авторы</string>
@@ -38,7 +38,7 @@
     <string name="registration_full_name_required">Укажите ФИО</string>
     <string name="registration_gender_required">Выберите пол</string>
     <string name="registration_course_required">Выберите курс</string>
-    <string name="registration_birth_date_required">Укажите дату рождения</string>
+    <string name="registration_birth_date_required">Укажите дату рождения не в будущем</string>
 
     <string name="registration_result_title">Игрок зарегистрирован</string>
     <string name="registration_result_format">ФИО: %1$s\nПол: %2$s\nКурс: %3$d\nСложность: %4$s\nДата рождения: %5$s\nЗнак зодиака: %6$s</string>
@@ -92,4 +92,35 @@
         <item>90 секунд</item>
         <item>120 секунд</item>
     </string-array>
+    <string name="navigation_profile">Профиль</string>
+    <string name="navigation_records">Рекорды</string>
+    <string name="data_loading">Загрузка…</string>
+    <string name="data_saving">Сохраняется…</string>
+    <string name="data_error">Не удалось загрузить данные. Повторите попытку.</string>
+    <string name="data_retry">Повторить</string>
+    <string name="profile_active">Выбран игрок: %1$s</string>
+    <string name="profile_empty">Для игры выберите профиль или создайте новый во вкладке «Профиль».</string>
+    <string name="profile_choice">%1$s · курс %2$d · %3$s %4$s</string>
+    <string name="profile_selected">✓ Выбран</string>
+    <string name="profile_create">Создать профиль</string>
+    <string name="profile_close_form">Закрыть форму</string>
+    <string name="profile_select_error">Не удалось выбрать профиль. Нажмите на игрока ещё раз.</string>
+    <string name="profile_save_error">Не удалось сохранить профиль. Повторите регистрацию.</string>
+    <string name="game_mode_custom">Свои настройки</string>
+    <string name="game_mode">Режим игры</string>
+    <string name="game_choose_profile">Выбрать профиль</string>
+    <string name="game_player_mode">Игрок: %1$s · %2$s</string>
+    <string name="game_saved">Результат сохранён</string>
+    <string name="game_save_error">Результат не сохранён. Повторите попытку перед новой игрой.</string>
+    <string name="settings_save_error">Настройки не сохранены. Нажмите «Применить настройки» ещё раз.</string>
+    <string name="settings_next_round">Настройки сохраняются на устройстве и действуют со следующего раунда.</string>
+    <string name="records_ranking">Рейтинг</string>
+    <string name="records_empty">Завершённых раундов пока нет.</string>
+    <string name="record_title">%1$s — %2$d очков</string>
+    <string name="record_details">%1$s · точность %2$.1f%%\nПопадания: %3$d · промахи: %4$d\n%5$s</string>
+    <string name="registration_duplicate_player">Игрок с такими ФИО и датой рождения уже существует. Выберите его в профиле.</string>
+    <string name="records_personal_hint">Лучший результат каждого игрока на выбранной сложности.</string>
+    <string name="records_rating_hint">Абсолютный лучший результат среди всех игроков для каждого уровня сложности.</string>
+    <string name="records_no_record">Рекорд пока не установлен</string>
+    <string name="record_ranked_title">%1$d. %2$s — %3$d очков</string>
 </resources>

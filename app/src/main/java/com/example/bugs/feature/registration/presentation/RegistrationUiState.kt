@@ -6,6 +6,9 @@ import com.example.bugs.domain.player.Player
 import java.time.LocalDate
 
 data class RegistrationUiState(
+    val saving: Boolean = false,
+    val saveError: Boolean = false,
+    val duplicatePlayer: Boolean = false,
     val fullName: String = "",
     val gender: Gender? = null,
     val course: Int? = null,

@@ -174,6 +174,11 @@
             android:layout_marginTop="32dp"
             android:text="@string/registration_submit" />
 
+        <TextView android:id="@+id/registration_save_error"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/profile_save_error" android:visibility="gone"
+            android:accessibilityLiveRegion="polite" android:textColor="?attr/colorError" />
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/registration_result"
             android:layout_width="match_parent"
