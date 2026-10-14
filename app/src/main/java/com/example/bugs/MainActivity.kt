@@ -8,14 +8,18 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.example.bugs.feature.authors.ui.AuthorsFragment
 import com.example.bugs.feature.game.ui.GameFragment
-import com.example.bugs.feature.registration.ui.RegistrationFragment
+import com.example.bugs.feature.profile.ui.ProfileFragment
+import com.example.bugs.feature.records.ui.RecordsFragment
 import com.example.bugs.feature.rules.ui.RulesFragment
 import com.example.bugs.feature.settings.ui.SettingsFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
+
+    fun openProfile() {
+        findViewById<ViewPager2>(R.id.main_view_pager).setCurrentItem(1, false)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,9 +31,9 @@ class MainActivity : AppCompatActivity() {
 
         val navigationItems = intArrayOf(
             R.id.navigation_game,
-            R.id.navigation_registration,
+            R.id.navigation_profile,
+            R.id.navigation_records,
             R.id.navigation_rules,
-            R.id.navigation_authors,
             R.id.navigation_settings
         )
 
@@ -38,9 +42,9 @@ class MainActivity : AppCompatActivity() {
 
             override fun createFragment(position: Int): Fragment = when (position) {
                 0 -> GameFragment()
-                1 -> RegistrationFragment()
-                2 -> RulesFragment()
-                3 -> AuthorsFragment()
+                1 -> ProfileFragment()
+                2 -> RecordsFragment()
+                3 -> RulesFragment()
                 else -> SettingsFragment()
             }
         }
