@@ -3,27 +3,44 @@ package com.example.bugs.feature.settings.ui
 import android.os.Bundle
 import android.view.View
 import android.widget.Filterable
-import android.widget.Toast
+import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.bugs.R
+import com.example.bugs.core.ui.gameModeLabel
+import com.example.bugs.data.DeviceStateEntity
+import com.example.bugs.domain.game.GameDifficulty
 import com.example.bugs.domain.game.GameSettings
+import com.example.bugs.domain.game.GameSettingsOptions
 import com.example.bugs.feature.game.presentation.GameViewModel
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
+
+    private val fields = listOf(
+        R.id.settings_speed,
+        R.id.settings_max_cockroaches,
+        R.id.settings_bonus_interval,
+        R.id.settings_round_duration
+    )
+    private val arrays = listOf(
+        R.array.settings_speed_values,
+        R.array.settings_cockroach_values,
+        R.array.settings_bonus_interval_values,
+        R.array.settings_round_duration_values
+    )
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
 
-        listOf(
-            R.id.settings_speed,
-            R.id.settings_max_cockroaches,
-            R.id.settings_bonus_interval,
-            R.id.settings_round_duration
-        ).forEach { id ->
-            (requireView().findViewById<MaterialAutoCompleteTextView>(id).adapter as Filterable)
-                .filter.filter(null)
+        (fields + R.id.settings_mode).forEach { id ->
+            val input = requireView().findViewById<MaterialAutoCompleteTextView>(id)
+            (input.adapter as Filterable).filter.filter(null)
         }
     }
 
@@ -31,56 +48,93 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         super.onViewCreated(view, savedInstanceState)
 
         val model = ViewModelProvider(requireActivity())[GameViewModel::class.java]
-        val settings = model.uiState.value.settings
+        val mode = view.findViewById<MaterialAutoCompleteTextView>(R.id.settings_mode)
+        val status = view.findViewById<TextView>(R.id.settings_status)
+        val apply = view.findViewById<View>(R.id.settings_apply)
+        val retry = view.findViewById<View>(R.id.settings_retry)
+        val inputs = fields.map { view.findViewById<MaterialAutoCompleteTextView>(it) }
+        val difficulties = GameDifficulty.entries.toList() + null
 
-        val speeds = listOf(.5f, 1f, 1.5f, 2f)
-        val counts = listOf(5, 10, 15, 20)
-        val intervals = listOf(5, 10, 15, 30)
-        val durations = listOf(30, 60, 90, 120)
+        inputs.forEachIndexed { index, input -> input.setSimpleItems(arrays[index]) }
+        mode.setSimpleItems(difficulties.map { requireContext().gameModeLabel(it?.name) }.toTypedArray())
 
-        view.setDropdown(
-            R.id.settings_speed,
-            R.array.settings_speed_values,
-            speeds.indexOf(settings.speed)
-        )
-        view.setDropdown(
-            R.id.settings_max_cockroaches,
-            R.array.settings_cockroach_values,
-            counts.indexOf(settings.maxBugs)
-        )
-        view.setDropdown(
-            R.id.settings_bonus_interval,
-            R.array.settings_bonus_interval_values,
-            intervals.indexOf(settings.bonusInterval)
-        )
-        view.setDropdown(
-            R.id.settings_round_duration,
-            R.array.settings_round_duration_values,
-            durations.indexOf(settings.duration)
-        )
+        var selectedDifficulty: GameDifficulty? = GameDifficulty.MEDIUM
+        var custom = model.uiState.value.device.selection.customSettings
+        var renderedSelection: DeviceStateEntity? = null
 
-        view.findViewById<View>(R.id.settings_apply).setOnClickListener {
-            fun index(id: Int, items: Int) = resources.getStringArray(items)
-                .indexOf(view.findViewById<MaterialAutoCompleteTextView>(id).text.toString())
-                .coerceAtLeast(0)
-
-            model.applySettings(
-                GameSettings(
-                    speeds[index(R.id.settings_speed, R.array.settings_speed_values)],
-                    counts[index(R.id.settings_max_cockroaches, R.array.settings_cockroach_values)],
-                    intervals[index(R.id.settings_bonus_interval, R.array.settings_bonus_interval_values)],
-                    durations[index(R.id.settings_round_duration, R.array.settings_round_duration_values)]
-                )
+        fun showValues(settings: GameSettings) {
+            val indices = listOf(
+                GameSettingsOptions.SPEEDS.indexOf(settings.speed),
+                GameSettingsOptions.BUG_COUNTS.indexOf(settings.maxBugs),
+                GameSettingsOptions.BONUS_INTERVALS.indexOf(settings.bonusInterval),
+                GameSettingsOptions.DURATIONS.indexOf(settings.duration)
             )
 
-            Toast.makeText(requireContext(), R.string.settings_applied, Toast.LENGTH_SHORT).show()
+            inputs.forEachIndexed { index, input ->
+                input.setText(resources.getStringArray(arrays[index])[indices[index]], false)
+            }
         }
-    }
-}
 
-private fun View.setDropdown(viewId: Int, itemsId: Int, defaultIndex: Int) {
-    findViewById<MaterialAutoCompleteTextView>(viewId).apply {
-        setSimpleItems(itemsId)
-        setText(resources.getStringArray(itemsId)[defaultIndex], false)
+        fun readCustom(): GameSettings {
+            val indices = inputs.mapIndexed { index, input ->
+                resources.getStringArray(arrays[index]).indexOf(input.text.toString()).coerceAtLeast(0)
+            }
+
+            return GameSettings(
+                speed = GameSettingsOptions.SPEEDS[indices[0]],
+                maxBugs = GameSettingsOptions.BUG_COUNTS[indices[1]],
+                bonusInterval = GameSettingsOptions.BONUS_INTERVALS[indices[2]],
+                duration = GameSettingsOptions.DURATIONS[indices[3]]
+            )
+        }
+
+        fun renderMode() {
+            mode.setText(requireContext().gameModeLabel(selectedDifficulty?.name), false)
+            showValues(selectedDifficulty?.settings() ?: custom)
+            inputs.forEach { it.isEnabled = selectedDifficulty == null }
+        }
+
+        mode.setOnItemClickListener { _, _, position, _ ->
+            if (selectedDifficulty == null) {
+                custom = readCustom()
+            }
+
+            selectedDifficulty = difficulties[position]
+            renderMode()
+        }
+
+        apply.setOnClickListener {
+            model.applySettings(selectedDifficulty?.settings() ?: readCustom(), selectedDifficulty)
+        }
+        retry.setOnClickListener { model.reload() }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.uiState.collect { state ->
+                    if (renderedSelection != state.device.selection) {
+                        renderedSelection = state.device.selection
+                        selectedDifficulty = state.device.selection.difficulty?.let(GameDifficulty::valueOf)
+                        custom = state.device.selection.customSettings
+                        renderMode()
+                    }
+
+                    val available = !state.device.loading && !state.device.error && !state.settingsSaving
+
+                    mode.isEnabled = available
+                    inputs.forEach { it.isEnabled = available && selectedDifficulty == null }
+                    apply.isEnabled = available
+                    retry.isVisible = state.device.error
+                    status.setText(
+                        when {
+                            state.device.loading -> R.string.data_loading
+                            state.device.error -> R.string.data_error
+                            state.settingsSaving -> R.string.data_saving
+                            state.settingsError -> R.string.settings_save_error
+                            else -> R.string.settings_next_round
+                        }
+                    )
+                }
+            }
+        }
     }
 }
