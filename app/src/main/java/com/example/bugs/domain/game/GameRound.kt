@@ -5,17 +5,24 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
+object GameSettingsOptions {
+    val SPEEDS = listOf(.5f, 1f, 1.5f, 2f)
+    val BUG_COUNTS = listOf(5, 10, 15, 20)
+    val BONUS_INTERVALS = listOf(5, 10, 15, 30)
+    val DURATIONS = listOf(30, 60, 90, 120)
+}
+
 data class GameSettings(
     val speed: Float = 1f,
     val maxBugs: Int = 10,
     val bonusInterval: Int = 15,
     val duration: Int = 60
-) {
+) : java.io.Serializable {
     init {
-        require(speed in listOf(.5f, 1f, 1.5f, 2f))
-        require(maxBugs in listOf(5, 10, 15, 20))
-        require(bonusInterval in listOf(5, 10, 15, 30))
-        require(duration in listOf(30, 60, 90, 120))
+        require(speed in GameSettingsOptions.SPEEDS)
+        require(maxBugs in GameSettingsOptions.BUG_COUNTS)
+        require(bonusInterval in GameSettingsOptions.BONUS_INTERVALS)
+        require(duration in GameSettingsOptions.DURATIONS)
     }
 }
 
