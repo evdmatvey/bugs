@@ -62,6 +62,23 @@ data class Bug(
     }
 }
 
+data class TiltBonus(
+    val x: Float,
+    val y: Float,
+    val expiresAt: Double
+) {
+    companion object {
+        const val RADIUS = 90f
+    }
+
+    fun contains(x: Float, y: Float): Boolean {
+        val dx = x - this.x
+        val dy = y - this.y
+
+        return dx * dx + dy * dy <= RADIUS * RADIUS
+    }
+}
+
 class GameRound(
     val settings: GameSettings,
     private val random: Random = Random.Default
@@ -87,6 +104,11 @@ class GameRound(
     var misses = 0
         private set
 
+    var tiltBonus: TiltBonus? = null
+        private set
+
+    val tiltRemaining get() = if (finished) 0.0 else (tiltUntil - elapsed).coerceAtLeast(0.0)
+
     val finished get() = elapsed >= settings.duration
 
     val remaining get() = (settings.duration - elapsed).coerceAtLeast(0.0)
@@ -95,10 +117,40 @@ class GameRound(
 
     private var nextId = 0L
     private var nextBonus = settings.bonusInterval.toDouble()
+    private var nextTiltBonus = 15.0
+    private var tiltAvailable = false
+    private var tiltUntil = 0.0
+    private var tiltX = 0f
+    private var tiltY = 0f
     private val replacements = mutableListOf<Double>()
 
     init {
         repeat(settings.maxBugs) { spawnRegular() }
+    }
+
+    fun configureTilt(available: Boolean) {
+        tiltAvailable = available
+
+        if (!available) {
+            tiltBonus = null
+            tiltUntil = 0.0
+            setTilt(0f, 0f)
+        }
+    }
+
+    fun setTilt(x: Float, y: Float) {
+        tiltX = if (x.isFinite()) x.coerceIn(-1f, 1f) else 0f
+        tiltY = if (y.isFinite()) y.coerceIn(-1f, 1f) else 0f
+    }
+
+    fun tapBonus(x: Float, y: Float): Boolean {
+        val bonus = tiltBonus ?: return false
+        if (finished || bonus.expiresAt <= elapsed || !bonus.contains(x, y)) return false
+
+        tiltBonus = null
+        tiltUntil = elapsed + 5
+
+        return true
     }
 
     private fun spawnRegular() {
@@ -130,13 +182,14 @@ class GameRound(
 
         while (left > 0 && !finished) {
             val step = left.coerceAtMost(.05)
+            val tiltStep = (tiltUntil - elapsed).coerceIn(0.0, step).toFloat()
             elapsed = (elapsed + step).coerceAtMost(settings.duration.toDouble())
             left = (left - step).coerceAtLeast(0.0)
 
             bugs = bugs.map { bug ->
                 val radius = bug.size * .8f
-                val x = bug.x + bug.velocityX * step.toFloat()
-                val y = bug.y + bug.velocityY * step.toFloat()
+                val x = bug.x + bug.velocityX * step.toFloat() + tiltX * 700 * tiltStep
+                val y = bug.y + bug.velocityY * step.toFloat() + tiltY * 700 * tiltStep
 
                 bug.copy(
                     x = x.coerceIn(radius, WIDTH - radius),
@@ -158,7 +211,25 @@ class GameRound(
                 )
             }
 
-            if (finished) break
+            if (finished) {
+                tiltBonus = null
+                break
+            }
+
+            if (tiltBonus?.let { it.expiresAt <= elapsed } == true) tiltBonus = null
+
+            if (elapsed >= nextTiltBonus) {
+                if (tiltAvailable) {
+                    val radius = TiltBonus.RADIUS
+                    tiltBonus = TiltBonus(
+                        radius + random.nextFloat() * (WIDTH - radius * 2),
+                        radius + random.nextFloat() * (HEIGHT - radius * 2),
+                        elapsed + 5
+                    )
+                }
+
+                nextTiltBonus += 15
+            }
 
             val expired = bugs.count { it.expiresAt?.let { end -> end <= elapsed } == true }
             bugs = bugs.filter { it.expiresAt?.let { end -> end <= elapsed } != true }

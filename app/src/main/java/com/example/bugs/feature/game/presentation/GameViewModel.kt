@@ -40,7 +40,8 @@ data class GameUiState(
     val roundPlayerName: String = "",
     val saveStatus: SaveStatus = SaveStatus.NONE,
     val settingsSaving: Boolean = false,
-    val settingsError: Boolean = false
+    val settingsError: Boolean = false,
+    val tiltAvailable: Boolean = false
 )
 
 class GameViewModel(
@@ -79,6 +80,15 @@ class GameViewModel(
 
     fun reload() = repository.reload()
 
+    fun setTiltAvailable(available: Boolean) {
+        state.value.round?.configureTilt(available)
+        state.value = state.value.copy(tiltAvailable = available)
+    }
+
+    fun setTilt(x: Float, y: Float) {
+        if (state.value.phase == GamePhase.RUNNING) state.value.round?.setTilt(x, y)
+    }
+
     fun applySettings(settings: GameSettings, difficulty: GameDifficulty?) {
         if (state.value.settingsSaving || state.value.device.loading || state.value.device.error) return
 
@@ -113,7 +123,7 @@ class GameViewModel(
         savedState["roundPlayerName"] = player.fullName
 
         state.value = current.copy(
-            round = GameRound(current.settings),
+            round = GameRound(current.settings).apply { configureTilt(current.tiltAvailable) },
             phase = GamePhase.RUNNING,
             roundPlayerName = player.fullName,
             result = null,
@@ -122,6 +132,8 @@ class GameViewModel(
     }
 
     fun pause() {
+        state.value.round?.setTilt(0f, 0f)
+
         if (state.value.phase == GamePhase.RUNNING) {
             state.value = state.value.copy(phase = GamePhase.PAUSED)
         }
@@ -148,6 +160,15 @@ class GameViewModel(
         }
 
         publish()
+    }
+
+    fun tapBonus(x: Float, y: Float, nanos: Long): Boolean {
+        frame(nanos)
+        if (state.value.phase != GamePhase.RUNNING) return false
+        val selected = state.value.round?.tapBonus(x, y) == true
+        if (selected) publish()
+
+        return selected
     }
 
     fun tap(x: Float, y: Float, nanos: Long): Int? {
