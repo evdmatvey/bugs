@@ -18,6 +18,7 @@ import androidx.customview.widget.ExploreByTouchHelper
 import com.example.bugs.R
 import com.example.bugs.domain.game.Bug
 import com.example.bugs.domain.game.GameRound
+import com.example.bugs.domain.game.TiltBonus
 import com.google.android.material.color.MaterialColors
 import kotlin.math.atan2
 import kotlin.math.min
@@ -28,7 +29,18 @@ class GameFieldView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
+    companion object {
+        private const val BONUS_ID = -2
+    }
+
     var round: GameRound? = null
+        set(value) {
+            if (accessibleBonus != value?.tiltBonus) {
+                accessibleBonus = value?.tiltBonus
+                accessibility.invalidateRoot()
+            }
+            field = value
+        }
 
     var active = false
         set(value) {
@@ -37,6 +49,7 @@ class GameFieldView @JvmOverloads constructor(
         }
 
     var onTap: ((Float, Float) -> Int?)? = null
+    var onBonusTap: ((Float, Float) -> Boolean)? = null
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val path = Path()
@@ -70,6 +83,7 @@ class GameFieldView @JvmOverloads constructor(
     )
 
     private val effects = mutableListOf<Effect>()
+    private var accessibleBonus: TiltBonus? = null
     private var gestureInField = false
 
     private val scale get() = min(width / GameRound.WIDTH, height / GameRound.HEIGHT)
@@ -81,6 +95,8 @@ class GameFieldView @JvmOverloads constructor(
         override fun getVirtualViewAt(x: Float, y: Float): Int {
             if (!active || scale <= 0) return INVALID_ID
 
+            if (round?.tiltBonus?.contains((x - left) / scale, (y - top) / scale) == true) return BONUS_ID
+
             return round?.bugs
                 ?.lastOrNull { it.contains((x - left) / scale, (y - top) / scale) }
                 ?.id
@@ -89,10 +105,36 @@ class GameFieldView @JvmOverloads constructor(
         }
 
         override fun getVisibleVirtualViews(ids: MutableList<Int>) {
-            if (active) round?.bugs?.forEach { ids.add(it.id.toInt()) }
+            if (active) {
+                round?.bugs?.forEach { ids.add(it.id.toInt()) }
+                if (round?.tiltBonus != null) ids.add(BONUS_ID)
+            }
         }
 
         override fun onPopulateNodeForVirtualView(id: Int, node: AccessibilityNodeInfoCompat) {
+            if (id == BONUS_ID) {
+                val bonus = round?.tiltBonus
+                node.contentDescription = context.getString(
+                    if (bonus == null) R.string.game_bonus_gone else R.string.game_tilt_bonus_accessibility
+                )
+                node.setBoundsInParent(
+                    if (bonus == null) {
+                        Rect(0, 0, 1, 1)
+                    } else {
+                        Rect(
+                            (left + (bonus.x - TiltBonus.RADIUS) * scale).toInt(),
+                            (top + (bonus.y - TiltBonus.RADIUS) * scale).toInt(),
+                            (left + (bonus.x + TiltBonus.RADIUS) * scale).toInt(),
+                            (top + (bonus.y + TiltBonus.RADIUS) * scale).toInt()
+                        )
+                    }
+                )
+                node.isClickable = active && bonus != null
+                node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
+
+                return
+            }
+
             val bug = round?.bugs?.find { it.id.toInt() == id }
 
             node.contentDescription = if (bug == null) {
@@ -122,10 +164,15 @@ class GameFieldView @JvmOverloads constructor(
             action: Int,
             arguments: Bundle?
         ): Boolean {
-            val bug = round?.bugs?.find { it.id.toInt() == id } ?: return false
             if (!active || action != AccessibilityNodeInfoCompat.ACTION_CLICK) return false
 
-            tap(bug.x, bug.y)
+            if (id == BONUS_ID) {
+                val bonus = round?.tiltBonus ?: return false
+                tap(bonus.x, bonus.y)
+            } else {
+                val bug = round?.bugs?.find { it.id.toInt() == id } ?: return false
+                tap(bug.x, bug.y)
+            }
             sendEventForVirtualView(id, AccessibilityEvent.TYPE_VIEW_CLICKED)
 
             return true
@@ -198,6 +245,46 @@ class GameFieldView @JvmOverloads constructor(
         }
 
         paint.alpha = 255
+        game?.tiltBonus?.let { drawBonus(canvas, it) }
+        canvas.restore()
+    }
+
+    private fun drawBonus(canvas: Canvas, bonus: TiltBonus) {
+        canvas.save()
+        canvas.translate(bonus.x, bonus.y)
+
+        paint.style = Paint.Style.FILL
+        paint.color = background
+        canvas.drawCircle(0f, 0f, TiltBonus.RADIUS, paint)
+        paint.style = Paint.Style.STROKE
+        paint.color = foreground
+        paint.strokeWidth = 5f
+        canvas.drawCircle(0f, 0f, TiltBonus.RADIUS - 5, paint)
+
+        canvas.save()
+        canvas.rotate(-20f)
+        canvas.drawRoundRect(-23f, -50f, 23f, 24f, 8f, 8f, paint)
+        canvas.drawLine(-7f, 13f, 7f, 13f, paint)
+        path.reset()
+        path.moveTo(-56f, -40f)
+        path.lineTo(-56f, 5f)
+        path.lineTo(-66f, -5f)
+        path.moveTo(-56f, 5f)
+        path.lineTo(-46f, -5f)
+        path.moveTo(56f, 5f)
+        path.lineTo(56f, -40f)
+        path.lineTo(46f, -30f)
+        path.moveTo(56f, -40f)
+        path.lineTo(66f, -30f)
+        canvas.drawPath(path, paint)
+        canvas.restore()
+
+        paint.style = Paint.Style.FILL
+        paint.textSize = 27f
+        paint.textAlign = Paint.Align.CENTER
+        paint.isFakeBoldText = true
+        canvas.drawText(context.getString(R.string.game_tilt_bonus), 0f, 62f, paint)
+        paint.isFakeBoldText = false
         canvas.restore()
     }
 
@@ -260,6 +347,14 @@ class GameFieldView @JvmOverloads constructor(
     }
 
     private fun tap(x: Float, y: Float) {
+        if (round?.tiltBonus?.contains(x, y) == true && onBonusTap?.invoke(x, y) == true) {
+            accessibility.invalidateRoot()
+            performClick()
+            invalidate()
+
+            return
+        }
+
         val bug = round?.bugs?.lastOrNull { it.contains(x, y) }
         val points = onTap?.invoke(x, y) ?: return
 
