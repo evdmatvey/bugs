@@ -25,11 +25,14 @@ import kotlinx.coroutines.launch
 class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallback {
 
     private lateinit var model: GameViewModel
+    private var tilt: GameTiltController? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         model = ViewModelProvider(requireActivity())[GameViewModel::class.java]
+        tilt = GameTiltController(requireContext(), model::setTilt) { model.setTiltAvailable(false) }
+        model.setTiltAvailable(tilt?.available == true)
 
         val field = view.findViewById<GameFieldView>(R.id.game_field)
         val status = view.findViewById<TextView>(R.id.game_status)
@@ -39,6 +42,7 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
         val action = view.findViewById<MaterialButton>(R.id.game_action)
 
         field.onTap = { x, y -> model.tap(x, y, System.nanoTime()) }
+        field.onBonusTap = { x, y -> model.tapBonus(x, y, System.nanoTime()) }
         action.setOnClickListener { performAction(field) }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -53,6 +57,13 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
                     }
 
                     status.text = getString(R.string.game_status, state.result?.score ?: state.round?.score ?: 0, remaining)
+                    val tiltRemaining = ceil(state.round?.tiltRemaining ?: 0.0).toInt()
+                    if (!state.tiltAvailable) {
+                        status.append("\n" + getString(R.string.game_tilt_unavailable))
+                    } else if (tiltRemaining > 0) {
+                        status.append("\n" + getString(R.string.game_tilt_active, tiltRemaining))
+                    }
+                    updateTilt()
                     overlay.isVisible = state.phase != GamePhase.RUNNING
                     action.isEnabled = when (state.phase) {
                         GamePhase.READY -> !state.device.loading && !state.settingsSaving
@@ -166,11 +177,13 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
 
     override fun onResume() {
         super.onResume()
+        updateTilt()
         Choreographer.getInstance().postFrameCallback(this)
     }
 
     override fun doFrame(frameTimeNanos: Long) {
         model.frame(frameTimeNanos)
+        updateTilt()
 
         if (isResumed) {
             Choreographer.getInstance().postFrameCallback(this)
@@ -178,8 +191,25 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
     }
 
     override fun onPause() {
+        tilt?.setRunning(false)
         model.pause()
         Choreographer.getInstance().removeFrameCallback(this)
         super.onPause()
+    }
+
+    private fun updateTilt() {
+        val state = model.uiState.value
+        tilt?.setRunning(isResumed && state.phase == GamePhase.RUNNING)
+        tilt?.updateSound((state.round?.tiltRemaining ?: 0.0) > 0)
+    }
+
+    override fun onDestroyView() {
+        tilt?.release()
+        tilt = null
+        view?.findViewById<GameFieldView>(R.id.game_field)?.apply {
+            onTap = null
+            onBonusTap = null
+        }
+        super.onDestroyView()
     }
 }

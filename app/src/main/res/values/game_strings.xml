@@ -1,9 +1,14 @@
 <resources>
     <string name="game_gone">Жук исчез</string>
+    <string name="game_bonus_gone">Бонус исчез</string>
+    <string name="game_tilt_bonus">НАКЛОН</string>
+    <string name="game_tilt_bonus_accessibility">Бонус наклона. На 5 секунд жуки скатываются в сторону наклона телефона.</string>
+    <string name="game_tilt_active">Наклоняйте телефон: %1$d с</string>
+    <string name="game_tilt_unavailable">Бонус наклона недоступен: нет датчика движения.</string>
     <string name="game_bug_accessibility">Жук, %1$d очков</string>
     <string name="navigation_game">Игра</string>
     <string name="game_title">Жуки</string>
-    <string name="game_field_description">Игровое поле. Нажимайте на тело жука, чтобы получить очки.</string>
+    <string name="game_field_description">Игровое поле. Нажимайте на тело жука, чтобы получить очки. Бонус «Наклон» включает скатывание жуков на 5 секунд.</string>
     <string name="game_status">Очки: %1$d · Осталось: %2$d с</string>
     <string name="game_ready">Поймай момент</string>
     <string name="game_ready_body">Нажимайте на жуков и набирайте очки. Каждый промах: −5.\n\nСкорость: %1$s× · Жуков: %2$d\nРедкий каждые %3$d с · Раунд: %4$d с</string>
@@ -14,7 +19,7 @@
     <string name="game_finished">Раунд завершён</string>
     <string name="game_results">Очки: %1$d\nПопадания: %2$d · Промахи: %3$d\nТочность: %4$s%%</string>
     <string name="game_replay">Играть снова</string>
-    <string name="game_legend">Обычный +10 · Быстрый +20 · Редкий +50</string>
+    <string name="game_legend">Обычный +10 · Быстрый +20 · Редкий +50\nБонус «Наклон» каждые 15 с · Действует 5 с</string>
     <string name="game_ready_player">%1$s\n\n%2$s</string>
     <string name="game_pause_player">%1$s\n\n%2$s</string>
     <string name="game_finished_player">%1$s\n%2$s\n\n%3$s</string>
