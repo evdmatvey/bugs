@@ -1,0 +1,15 @@
+<resources>
+    <string name="gold_widget_name">Золото ЦБ</string>
+    <string name="gold_widget_description">Цена грамма золота Банка России. Нажмите на шар, чтобы обновить.</string>
+    <string name="gold_widget_price">%1$s ₽/г</string>
+    <string name="gold_widget_empty">Нет курса</string>
+    <string name="gold_widget_retry">Нажмите для обновления</string>
+    <string name="gold_widget_error">Нет связи. Нажмите для повтора</string>
+    <string name="gold_widget_cached">%1$s · кэш</string>
+    <string name="gold_widget_accessibility">Золото ЦБ. %1$s. %2$s. Нажмите для обновления.</string>
+    <string name="gold_loading">Загрузка курса…</string>
+    <string name="game_gold_unavailable">Золотой таракан недоступен: нет курса ЦБ.</string>
+    <string name="game_gold_points">Золотой: +%1$d · каждые 20 с</string>
+    <string name="game_gold_cached">Золотой: +%1$d · сохранённый курс</string>
+    <string name="game_gold_accessibility">Золотой таракан, %1$d очков</string>
+</resources>
