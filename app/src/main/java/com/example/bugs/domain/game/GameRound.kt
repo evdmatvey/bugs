@@ -34,7 +34,8 @@ enum class BugType(
 ) {
     NORMAL(100f, 100f, 10, "normal"),
     FAST(80f, 180f, 20, "fast"),
-    RARE(110f, 120f, 50, "rare")
+    RARE(110f, 120f, 50, "rare"),
+    GOLD(110f, 120f, 0, "gold")
 }
 
 data class Bug(
@@ -118,6 +119,8 @@ class GameRound(
     private var nextId = 0L
     private var nextBonus = settings.bonusInterval.toDouble()
     private var nextTiltBonus = 15.0
+    private var nextGold = 20.0
+    private var goldPoints: Int? = null
     private var tiltAvailable = false
     private var tiltUntil = 0.0
     private var tiltX = 0f
@@ -126,6 +129,11 @@ class GameRound(
 
     init {
         repeat(settings.maxBugs) { spawnRegular() }
+    }
+
+    fun configureGold(points: Int?) {
+        require(points == null || points > 0)
+        goldPoints = points
     }
 
     fun configureTilt(available: Boolean) {
@@ -157,7 +165,7 @@ class GameRound(
         spawn(if (random.nextInt(4) == 0) BugType.FAST else BugType.NORMAL)
     }
 
-    private fun spawn(type: BugType) {
+    private fun spawn(type: BugType, points: Int = type.points) {
         val angle = random.nextFloat() * Math.PI.toFloat() * 2
         val radius = type.size * .8f
 
@@ -169,10 +177,21 @@ class GameRound(
             sin(angle) * type.speed * settings.speed,
             type.size,
             type,
-            type.points,
+            points,
             type.visual,
-            if (type == BugType.RARE) elapsed + 5 else null
+            if (type == BugType.RARE || type == BugType.GOLD) elapsed + 5 else null
         )
+    }
+
+    private fun spawnBonus(type: BugType, points: Int = type.points) {
+        if (bugs.size >= settings.maxBugs) {
+            val replaced = bugs.firstOrNull { it.type == BugType.NORMAL || it.type == BugType.FAST }
+                ?: if (type == BugType.GOLD) bugs.firstOrNull { it.type == BugType.RARE } else null
+
+            if (replaced != null) bugs = bugs.filterNot { it.id == replaced.id }
+        }
+
+        if (bugs.size < settings.maxBugs) spawn(type, points)
     }
 
     fun advance(seconds: Double) {
@@ -235,13 +254,13 @@ class GameRound(
             bugs = bugs.filter { it.expiresAt?.let { end -> end <= elapsed } != true }
             repeat(expired) { replacements.add(elapsed) }
 
-            if (elapsed >= nextBonus) {
-                if (bugs.size >= settings.maxBugs) {
-                    val replaced = bugs.firstOrNull { it.type != BugType.RARE }
-                    if (replaced != null) bugs = bugs.filterNot { it.id == replaced.id }
-                }
+            if (elapsed >= nextGold) {
+                goldPoints?.let { spawnBonus(BugType.GOLD, it) }
+                nextGold += 20
+            }
 
-                if (bugs.size < settings.maxBugs) spawn(BugType.RARE)
+            if (elapsed >= nextBonus) {
+                spawnBonus(BugType.RARE)
                 nextBonus += settings.bonusInterval
             }
 
