@@ -19,7 +19,7 @@
     <string name="game_finished">Раунд завершён</string>
     <string name="game_results">Очки: %1$d\nПопадания: %2$d · Промахи: %3$d\nТочность: %4$s%%</string>
     <string name="game_replay">Играть снова</string>
-    <string name="game_legend">Обычный +10 · Быстрый +20 · Редкий +50\nБонус «Наклон» каждые 15 с · Действует 5 с</string>
+    <string name="game_legend">Обычный +10 · Быстрый +20 · Редкий +50\nЗолотой каждые 20 с · Очки = курс ЦБ / 100\nБонус «Наклон» каждые 15 с · Действует 5 с</string>
     <string name="game_ready_player">%1$s\n\n%2$s</string>
     <string name="game_pause_player">%1$s\n\n%2$s</string>
     <string name="game_finished_player">%1$s\n%2$s\n\n%3$s</string>
