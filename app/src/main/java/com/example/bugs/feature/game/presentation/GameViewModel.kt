@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.bugs.BugsApplication
 import com.example.bugs.data.DeviceData
+import com.example.bugs.data.GoldState
 import com.example.bugs.data.ResultEntity
 import com.example.bugs.domain.game.GameDifficulty
 import com.example.bugs.domain.game.GameRound
@@ -41,7 +42,8 @@ data class GameUiState(
     val saveStatus: SaveStatus = SaveStatus.NONE,
     val settingsSaving: Boolean = false,
     val settingsError: Boolean = false,
-    val tiltAvailable: Boolean = false
+    val tiltAvailable: Boolean = false,
+    val gold: GoldState = GoldState()
 )
 
 class GameViewModel(
@@ -50,6 +52,7 @@ class GameViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = (application as BugsApplication).repository
+    private val goldRepository = (application as BugsApplication).goldRepository
     private val restored = savedState.get<ResultEntity>("pendingResult")
     private val state = MutableStateFlow(
         GameUiState(
@@ -68,6 +71,13 @@ class GameViewModel(
 
     init {
         viewModelScope.launch {
+            goldRepository.gold.collect { gold ->
+                state.value.round?.configureGold(gold.quote?.points)
+                state.value = state.value.copy(gold = gold)
+            }
+        }
+
+        viewModelScope.launch {
             repository.device.collect { device ->
                 state.value = state.value.copy(device = device, settings = device.selection.settings())
 
@@ -79,6 +89,10 @@ class GameViewModel(
     }
 
     fun reload() = repository.reload()
+
+    fun refreshGold() {
+        viewModelScope.launch { goldRepository.refresh() }
+    }
 
     fun setTiltAvailable(available: Boolean) {
         state.value.round?.configureTilt(available)
@@ -123,7 +137,10 @@ class GameViewModel(
         savedState["roundPlayerName"] = player.fullName
 
         state.value = current.copy(
-            round = GameRound(current.settings).apply { configureTilt(current.tiltAvailable) },
+            round = GameRound(current.settings).apply {
+                configureTilt(current.tiltAvailable)
+                configureGold(current.gold.quote?.points)
+            },
             phase = GamePhase.RUNNING,
             roundPlayerName = player.fullName,
             result = null,

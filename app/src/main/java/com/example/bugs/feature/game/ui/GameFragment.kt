@@ -57,6 +57,16 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
                     }
 
                     status.text = getString(R.string.game_status, state.result?.score ?: state.round?.score ?: 0, remaining)
+                    val gold = state.gold
+                    val quote = gold.quote
+                    status.append("\n" + when {
+                        quote != null -> getString(
+                            if (gold.error) R.string.game_gold_cached else R.string.game_gold_points,
+                            quote.points
+                        )
+                        gold.loading -> getString(R.string.gold_loading)
+                        else -> getString(R.string.game_gold_unavailable)
+                    })
                     val tiltRemaining = ceil(state.round?.tiltRemaining ?: 0.0).toInt()
                     if (!state.tiltAvailable) {
                         status.append("\n" + getString(R.string.game_tilt_unavailable))
@@ -177,6 +187,7 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
 
     override fun onResume() {
         super.onResume()
+        model.refreshGold()
         updateTilt()
         Choreographer.getInstance().postFrameCallback(this)
     }
