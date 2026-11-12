@@ -9,8 +9,12 @@ viewpager2 = "1.1.0"
 room = "2.8.5"
 ksp = "2.3.7"
 lifecycle = "2.9.4"
+retrofit = "3.0.0"
+work = "2.10.5"
 
 [libraries]
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
