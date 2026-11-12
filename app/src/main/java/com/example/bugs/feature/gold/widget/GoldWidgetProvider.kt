@@ -15,6 +15,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.bugs.BugsApplication
+import com.example.bugs.MainActivity
 import com.example.bugs.R
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
@@ -57,6 +58,12 @@ class GoldWidgetProvider : AppWidgetProvider() {
                 Intent(context, GoldWidgetProvider::class.java).setAction(REFRESH),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            val open = PendingIntent.getActivity(
+                context,
+                0,
+                Intent.makeMainActivity(ComponentName(context, MainActivity::class.java)),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
             val views = RemoteViews(context.packageName, R.layout.widget_gold).apply {
                 setTextViewText(R.id.gold_price, price)
                 setTextViewText(R.id.gold_date, message)
@@ -64,7 +71,12 @@ class GoldWidgetProvider : AppWidgetProvider() {
                     R.id.gold_sphere,
                     context.getString(R.string.gold_widget_accessibility, price, message)
                 )
-                setOnClickPendingIntent(R.id.gold_sphere, refresh)
+                setContentDescription(
+                    R.id.gold_price,
+                    context.getString(R.string.gold_widget_price_accessibility, price)
+                )
+                setOnClickPendingIntent(R.id.gold_sphere, open)
+                setOnClickPendingIntent(R.id.gold_price, refresh)
             }
 
             manager.updateAppWidget(ids, views)
