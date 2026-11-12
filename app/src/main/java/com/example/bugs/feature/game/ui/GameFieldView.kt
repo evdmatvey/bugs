@@ -17,6 +17,7 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.customview.widget.ExploreByTouchHelper
 import com.example.bugs.R
 import com.example.bugs.domain.game.Bug
+import com.example.bugs.domain.game.BugType
 import com.example.bugs.domain.game.GameRound
 import com.example.bugs.domain.game.TiltBonus
 import com.google.android.material.color.MaterialColors
@@ -65,13 +66,15 @@ class GameFieldView @JvmOverloads constructor(
     private val colors = mapOf(
         "normal" to ContextCompat.getColor(context, R.color.bug_normal),
         "fast" to ContextCompat.getColor(context, R.color.bug_fast),
-        "rare" to ContextCompat.getColor(context, R.color.bug_rare)
+        "rare" to ContextCompat.getColor(context, R.color.bug_rare),
+        "gold" to ContextCompat.getColor(context, R.color.bug_gold)
     )
 
     private val bodies = mapOf(
         "normal" to requireNotNull(AppCompatResources.getDrawable(context, R.drawable.bug_normal)).mutate(),
         "fast" to requireNotNull(AppCompatResources.getDrawable(context, R.drawable.bug_fast)).mutate(),
-        "rare" to requireNotNull(AppCompatResources.getDrawable(context, R.drawable.bug_rare)).mutate()
+        "rare" to requireNotNull(AppCompatResources.getDrawable(context, R.drawable.bug_rare)).mutate(),
+        "gold" to requireNotNull(AppCompatResources.getDrawable(context, R.drawable.bug_gold)).mutate()
     )
 
     private data class Effect(
@@ -140,7 +143,10 @@ class GameFieldView @JvmOverloads constructor(
             node.contentDescription = if (bug == null) {
                 context.getString(R.string.game_gone)
             } else {
-                context.getString(R.string.game_bug_accessibility, bug.points)
+                context.getString(
+                    if (bug.type == BugType.GOLD) R.string.game_gold_accessibility else R.string.game_bug_accessibility,
+                    bug.points
+                )
             }
             node.setBoundsInParent(
                 if (bug == null) {
