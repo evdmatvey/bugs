@@ -1,9 +1,8 @@
 package com.example.bugs.feature.registration.presentation
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bugs.BugsApplication
+import com.example.bugs.data.BugsRepository
 import com.example.bugs.data.CreatePlayerResult
 import com.example.bugs.domain.game.GameDifficulty
 import com.example.bugs.domain.player.Gender
@@ -17,9 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class RegistrationViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = (application as BugsApplication).repository
+class RegistrationViewModel(private val repository: BugsRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegistrationUiState())
 

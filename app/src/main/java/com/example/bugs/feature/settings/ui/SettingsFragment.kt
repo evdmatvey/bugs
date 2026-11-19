@@ -7,7 +7,6 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.bugs.R
@@ -19,8 +18,11 @@ import com.example.bugs.domain.game.GameSettingsOptions
 import com.example.bugs.feature.game.presentation.GameViewModel
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
+
+    private val model: GameViewModel by activityViewModel()
 
     private val fields = listOf(
         R.id.settings_speed,
@@ -47,7 +49,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val model = ViewModelProvider(requireActivity())[GameViewModel::class.java]
         val mode = view.findViewById<MaterialAutoCompleteTextView>(R.id.settings_mode)
         val status = view.findViewById<TextView>(R.id.settings_status)
         val apply = view.findViewById<View>(R.id.settings_apply)

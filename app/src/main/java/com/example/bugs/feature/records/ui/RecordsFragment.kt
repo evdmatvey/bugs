@@ -9,7 +9,6 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DiffUtil
@@ -29,8 +28,11 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class RecordsFragment : Fragment(R.layout.fragment_records) {
+
+    private val model: RecordsViewModel by viewModel()
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
@@ -42,7 +44,6 @@ class RecordsFragment : Fragment(R.layout.fragment_records) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val model = ViewModelProvider(this)[RecordsViewModel::class.java]
         val tabs = view.findViewById<MaterialButtonToggleGroup>(R.id.records_tabs)
         val mode = view.findViewById<MaterialAutoCompleteTextView>(R.id.records_mode)
         val list = view.findViewById<RecyclerView>(R.id.records_list)

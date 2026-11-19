@@ -1,11 +1,11 @@
 package com.example.bugs.feature.game.presentation
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bugs.BugsApplication
+import com.example.bugs.data.BugsRepository
 import com.example.bugs.data.DeviceData
+import com.example.bugs.data.GoldRepository
 import com.example.bugs.data.GoldState
 import com.example.bugs.data.ResultEntity
 import com.example.bugs.domain.game.GameDifficulty
@@ -47,12 +47,11 @@ data class GameUiState(
 )
 
 class GameViewModel(
-    application: Application,
+    private val repository: BugsRepository,
+    private val goldRepository: GoldRepository,
     private val savedState: SavedStateHandle
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
-    private val repository = (application as BugsApplication).repository
-    private val goldRepository = (application as BugsApplication).goldRepository
     private val restored = savedState.get<ResultEntity>("pendingResult")
     private val state = MutableStateFlow(
         GameUiState(
