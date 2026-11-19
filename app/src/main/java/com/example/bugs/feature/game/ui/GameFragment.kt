@@ -7,7 +7,6 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.bugs.MainActivity
@@ -21,16 +20,16 @@ import com.google.android.material.button.MaterialButton
 import java.util.Locale
 import kotlin.math.ceil
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallback {
 
-    private lateinit var model: GameViewModel
+    private val model: GameViewModel by activityViewModel()
     private var tilt: GameTiltController? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        model = ViewModelProvider(requireActivity())[GameViewModel::class.java]
         tilt = GameTiltController(requireContext(), model::setTilt) { model.setTiltAvailable(false) }
         model.setTiltAvailable(tilt?.available == true)
 
@@ -45,77 +44,80 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
         field.onBonusTap = { x, y -> model.tapBonus(x, y, System.nanoTime()) }
         action.setOnClickListener { performAction(field) }
 
+        fun render(state: GameUiState) {
+            field.round = state.round
+            field.active = state.phase == GamePhase.RUNNING
+            field.invalidate()
+
+            val remaining = if (state.phase == GamePhase.FINISHED) 0 else {
+                ceil(state.round?.remaining ?: state.settings.duration.toDouble()).toInt()
+            }
+
+            status.text = getString(R.string.game_status, state.result?.score ?: state.round?.score ?: 0, remaining)
+            val gold = state.gold
+            val quote = gold.quote
+            status.append("\n" + when {
+                quote != null -> getString(
+                    if (gold.error) R.string.game_gold_cached else R.string.game_gold_points,
+                    quote.points
+                )
+                gold.loading -> getString(R.string.gold_loading)
+                else -> getString(R.string.game_gold_unavailable)
+            })
+            val tiltRemaining = ceil(state.round?.tiltRemaining ?: 0.0).toInt()
+            if (!state.tiltAvailable) {
+                status.append("\n" + getString(R.string.game_tilt_unavailable))
+            } else if (tiltRemaining > 0) {
+                status.append("\n" + getString(R.string.game_tilt_active, tiltRemaining))
+            }
+            updateTilt()
+            overlay.isVisible = state.phase != GamePhase.RUNNING
+            action.isEnabled = when (state.phase) {
+                GamePhase.READY -> !state.device.loading && !state.settingsSaving
+                GamePhase.FINISHED -> state.saveStatus == SaveStatus.ERROR ||
+                    (state.saveStatus == SaveStatus.SAVED && !state.device.loading && !state.settingsSaving)
+                else -> true
+            }
+
+            when (state.phase) {
+                GamePhase.READY -> {
+                    title.setText(R.string.game_ready)
+                    body.text = readyBody(state)
+                    action.setText(
+                        when {
+                            state.device.error -> R.string.data_retry
+                            state.device.activePlayer == null -> R.string.game_choose_profile
+                            else -> R.string.game_start
+                        }
+                    )
+                }
+
+                GamePhase.PAUSED -> {
+                    title.setText(R.string.game_pause)
+                    body.text = getString(R.string.game_pause_player, state.roundPlayerName, getString(R.string.game_pause_body))
+                    action.setText(R.string.game_resume)
+                }
+
+                GamePhase.FINISHED -> {
+                    title.setText(R.string.game_finished)
+                    body.text = finishedBody(state)
+                    action.setText(
+                        if (state.saveStatus == SaveStatus.ERROR || state.device.error) {
+                            R.string.data_retry
+                        } else {
+                            R.string.game_replay
+                        }
+                    )
+                }
+
+                GamePhase.RUNNING -> Unit
+            }
+        }
+
+        render(model.uiState.value)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                model.uiState.collect { state ->
-                    field.round = state.round
-                    field.active = state.phase == GamePhase.RUNNING
-                    field.invalidate()
-
-                    val remaining = if (state.phase == GamePhase.FINISHED) 0 else {
-                        ceil(state.round?.remaining ?: state.settings.duration.toDouble()).toInt()
-                    }
-
-                    status.text = getString(R.string.game_status, state.result?.score ?: state.round?.score ?: 0, remaining)
-                    val gold = state.gold
-                    val quote = gold.quote
-                    status.append("\n" + when {
-                        quote != null -> getString(
-                            if (gold.error) R.string.game_gold_cached else R.string.game_gold_points,
-                            quote.points
-                        )
-                        gold.loading -> getString(R.string.gold_loading)
-                        else -> getString(R.string.game_gold_unavailable)
-                    })
-                    val tiltRemaining = ceil(state.round?.tiltRemaining ?: 0.0).toInt()
-                    if (!state.tiltAvailable) {
-                        status.append("\n" + getString(R.string.game_tilt_unavailable))
-                    } else if (tiltRemaining > 0) {
-                        status.append("\n" + getString(R.string.game_tilt_active, tiltRemaining))
-                    }
-                    updateTilt()
-                    overlay.isVisible = state.phase != GamePhase.RUNNING
-                    action.isEnabled = when (state.phase) {
-                        GamePhase.READY -> !state.device.loading && !state.settingsSaving
-                        GamePhase.FINISHED -> state.saveStatus == SaveStatus.ERROR ||
-                            (state.saveStatus == SaveStatus.SAVED && !state.device.loading && !state.settingsSaving)
-                        else -> true
-                    }
-
-                    when (state.phase) {
-                        GamePhase.READY -> {
-                            title.setText(R.string.game_ready)
-                            body.text = readyBody(state)
-                            action.setText(
-                                when {
-                                    state.device.error -> R.string.data_retry
-                                    state.device.activePlayer == null -> R.string.game_choose_profile
-                                    else -> R.string.game_start
-                                }
-                            )
-                        }
-
-                        GamePhase.PAUSED -> {
-                            title.setText(R.string.game_pause)
-                            body.text = getString(R.string.game_pause_player, state.roundPlayerName, getString(R.string.game_pause_body))
-                            action.setText(R.string.game_resume)
-                        }
-
-                        GamePhase.FINISHED -> {
-                            title.setText(R.string.game_finished)
-                            body.text = finishedBody(state)
-                            action.setText(
-                                if (state.saveStatus == SaveStatus.ERROR || state.device.error) {
-                                    R.string.data_retry
-                                } else {
-                                    R.string.game_replay
-                                }
-                            )
-                        }
-
-                        GamePhase.RUNNING -> Unit
-                    }
-                }
+                model.uiState.collect { render(it) }
             }
         }
     }

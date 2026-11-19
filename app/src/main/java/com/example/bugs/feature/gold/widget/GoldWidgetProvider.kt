@@ -14,26 +14,30 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.bugs.BugsApplication
 import com.example.bugs.MainActivity
 import com.example.bugs.R
+import com.example.bugs.data.GoldRepository
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class GoldWidgetProvider : AppWidgetProvider() {
 
-    companion object {
+    companion object : KoinComponent {
         private const val REFRESH = "com.example.bugs.REFRESH_GOLD"
         private const val PERIODIC_WORK = "gold_periodic"
         private const val REFRESH_WORK = "gold_refresh"
+
+        private val repository: GoldRepository by inject()
 
         fun updateAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, GoldWidgetProvider::class.java))
             if (ids.isEmpty()) return
 
-            val state = (context.applicationContext as BugsApplication).goldRepository.gold.value
+            val state = repository.gold.value
             val quote = state.quote
             val price = if (quote == null) {
                 context.getString(R.string.gold_widget_empty)

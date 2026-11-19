@@ -1,10 +1,9 @@
 package com.example.bugs.feature.records.presentation
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bugs.BugsApplication
+import com.example.bugs.data.BugsRepository
 import com.example.bugs.data.NamedResult
 import com.example.bugs.domain.game.GameDifficulty
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,11 +37,10 @@ data class RecordsUiState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RecordsViewModel(
-    application: Application,
+    private val repository: BugsRepository,
     private val savedState: SavedStateHandle
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
-    private val repository = (application as BugsApplication).repository
     private val section = savedState.getStateFlow("recordsSection", RecordsSection.RECORDS)
     private val difficulty = savedState.getStateFlow("recordsDifficulty", GameDifficulty.MEDIUM)
     private val retry = MutableStateFlow(0)
