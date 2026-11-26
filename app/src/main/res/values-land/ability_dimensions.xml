@@ -1,0 +1,7 @@
+<resources>
+    <dimen name="ability_icon_size">32dp</dimen>
+    <dimen name="ability_icon_height">36dp</dimen>
+    <dimen name="ability_card_padding">8dp</dimen>
+    <dimen name="ability_name_margin">4dp</dimen>
+    <integer name="ability_name_lines">1</integer>
+</resources>

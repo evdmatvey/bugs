@@ -2,6 +2,7 @@ package com.example.bugs.domain.game
 
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -108,6 +109,52 @@ class GameRound(
     var tiltBonus: TiltBonus? = null
         private set
 
+    var offer: List<GameAbility> = emptyList()
+        private set
+
+    var pendingAbility: GameAbility? = null
+        private set
+
+    var bait: Bait? = null
+        private set
+
+    var animationTime = 0.0
+        private set
+
+    var abilityEffects: List<AbilityEffect> = emptyList()
+        private set
+
+    private val offers = AbilityOffers(random)
+    private val activeUntil = mutableMapOf<GameAbility, Double>()
+    private var nextOffer = 10.0
+
+    fun abilityRemaining(ability: GameAbility): Double =
+        if (finished) 0.0 else ((activeUntil[ability] ?: 0.0) - elapsed).coerceAtLeast(0.0)
+
+    fun buyAbility(ability: GameAbility): Boolean {
+        if (finished || ability !in offer || score < ability.price) return false
+
+        score -= ability.price
+        offer = emptyList()
+
+        when (ability) {
+            GameAbility.BAIT, GameAbility.BOMB, GameAbility.CHAIN -> pendingAbility = ability
+            else -> {
+                activeUntil[ability] = elapsed + ability.duration
+                abilityEffects = abilityEffects + AbilityEffect(ability, WIDTH / 2, HEIGHT / 2, elapsed)
+            }
+        }
+
+        return true
+    }
+
+    fun skipOffer(): Boolean {
+        if (offer.isEmpty()) return false
+        offer = emptyList()
+
+        return true
+    }
+
     val tiltRemaining get() = if (finished) 0.0 else (tiltUntil - elapsed).coerceAtLeast(0.0)
 
     val finished get() = elapsed >= settings.duration
@@ -153,7 +200,7 @@ class GameRound(
 
     fun tapBonus(x: Float, y: Float): Boolean {
         val bonus = tiltBonus ?: return false
-        if (finished || bonus.expiresAt <= elapsed || !bonus.contains(x, y)) return false
+        if (finished || offer.isNotEmpty() || pendingAbility != null || bonus.expiresAt <= elapsed || !bonus.contains(x, y)) return false
 
         tiltBonus = null
         tiltUntil = elapsed + 5
@@ -197,18 +244,36 @@ class GameRound(
     fun advance(seconds: Double) {
         require(seconds.isFinite() && seconds >= 0)
 
+        if (offer.isNotEmpty()) return
+
         var left = seconds.coerceAtMost(remaining)
 
         while (left > 0 && !finished) {
-            val step = left.coerceAtMost(.05)
-            val tiltStep = (tiltUntil - elapsed).coerceIn(0.0, step).toFloat()
+            val effectEnd = (activeUntil.values + listOfNotNull(bait?.expiresAt))
+                .filter { it > elapsed }.minOrNull() ?: Double.POSITIVE_INFINITY
+            val step = minOf(left, .05, nextOffer - elapsed, effectEnd - elapsed)
+            val movement = when {
+                abilityRemaining(GameAbility.FREEZE) > 0 -> 0f
+                abilityRemaining(GameAbility.SLOW) > 0 -> .5f
+                else -> 1f
+            }
+            val tiltStep = (tiltUntil - elapsed).coerceIn(0.0, step).toFloat() * movement
+            animationTime += step * movement
             elapsed = (elapsed + step).coerceAtMost(settings.duration.toDouble())
+            if (abs(elapsed - nextOffer) < 1e-8) elapsed = nextOffer
+            if (abs(elapsed - settings.duration) < 1e-8) elapsed = settings.duration.toDouble()
             left = (left - step).coerceAtLeast(0.0)
 
             bugs = bugs.map { bug ->
                 val radius = bug.size * .8f
-                val x = bug.x + bug.velocityX * step.toFloat() + tiltX * 700 * tiltStep
-                val y = bug.y + bug.velocityY * step.toFloat() + tiltY * 700 * tiltStep
+                val lure = bait
+                val distance = lure?.let { hypot(it.x - bug.x, it.y - bug.y) } ?: 0f
+                val speed = hypot(bug.velocityX, bug.velocityY)
+                val travel = (speed * step.toFloat() * movement).coerceAtMost(distance)
+                val dx = if (lure != null && distance > 0) (lure.x - bug.x) / distance * travel else 0f
+                val dy = if (lure != null && distance > 0) (lure.y - bug.y) / distance * travel else 0f
+                val x = bug.x + (if (lure == null) bug.velocityX * step.toFloat() * movement else dx) + tiltX * 700 * tiltStep
+                val y = bug.y + (if (lure == null) bug.velocityY * step.toFloat() * movement else dy) + tiltY * 700 * tiltStep
 
                 bug.copy(
                     x = x.coerceIn(radius, WIDTH - radius),
@@ -232,8 +297,15 @@ class GameRound(
 
             if (finished) {
                 tiltBonus = null
+                pendingAbility = null
+                bait = null
+                activeUntil.clear()
+                abilityEffects = emptyList()
                 break
             }
+
+            if (bait?.let { it.expiresAt <= elapsed } == true) bait = null
+            abilityEffects = abilityEffects.filter { elapsed - it.born < .45 }
 
             if (tiltBonus?.let { it.expiresAt <= elapsed } == true) tiltBonus = null
 
@@ -269,31 +341,66 @@ class GameRound(
             repeat(due) {
                 if (bugs.size < settings.maxBugs) spawnRegular()
             }
+
+            if (elapsed >= nextOffer) {
+                nextOffer += 10
+                if (pendingAbility == null) offer = offers.next(score)
+                if (offer.isNotEmpty()) break
+            }
         }
     }
 
-    fun tap(x: Float, y: Float): Int? {
+    fun tap(x: Float, y: Float): AttackResult? {
         if (
-            finished ||
-            !x.isFinite() ||
-            !y.isFinite() ||
-            x !in 0f..WIDTH ||
-            y !in 0f..HEIGHT
+            finished || offer.isNotEmpty() ||
+            !x.isFinite() || !y.isFinite() ||
+            x !in 0f..WIDTH || y !in 0f..HEIGHT
         ) return null
 
-        val bug = bugs.lastOrNull { it.contains(x, y) }
-        val points = if (bug == null) {
+        val ability = pendingAbility
+        pendingAbility = null
+
+        if (ability == GameAbility.BAIT) {
+            bait = Bait(x, y, elapsed + GameAbility.BAIT.duration)
+            return AttackResult(0)
+        }
+
+        val selected = bugs.lastOrNull { it.contains(x, y) }
+        val targets = when (ability) {
+            GameAbility.BOMB -> bugs.filter { hypot(it.x - x, it.y - y) <= 240f }
+            GameAbility.CHAIN -> {
+                val chain = mutableListOf<Bug>()
+                var current = selected
+
+                while (current != null && chain.size < 5) {
+                    val origin = current
+                    chain.add(origin)
+                    current = bugs.filter { it !in chain && hypot(it.x - origin.x, it.y - origin.y) <= 280f }
+                        .minWithOrNull(compareBy<Bug> { hypot(it.x - origin.x, it.y - origin.y) }.thenBy { it.id })
+                }
+
+                chain
+            }
+            else -> listOfNotNull(selected)
+        }
+
+        if (ability != null) {
+            abilityEffects = abilityEffects + AbilityEffect(ability, x, y, elapsed, targets)
+        }
+
+        val points = if (targets.isEmpty()) {
             misses++
             -5
         } else {
-            hits++
-            bugs = bugs.filterNot { it.id == bug.id }
-            replacements.add(elapsed + .6)
-            bug.points
+            hits += targets.size
+            val ids = targets.map { it.id }.toSet()
+            bugs = bugs.filterNot { it.id in ids }
+            repeat(targets.size) { replacements.add(elapsed + .6) }
+            targets.sumOf { it.points }
         }
 
         score += points
 
-        return points
+        return AttackResult(points, targets)
     }
 }

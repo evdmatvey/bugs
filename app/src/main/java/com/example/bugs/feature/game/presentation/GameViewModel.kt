@@ -8,6 +8,8 @@ import com.example.bugs.data.DeviceData
 import com.example.bugs.data.GoldRepository
 import com.example.bugs.data.GoldState
 import com.example.bugs.data.ResultEntity
+import com.example.bugs.domain.game.AttackResult
+import com.example.bugs.domain.game.GameAbility
 import com.example.bugs.domain.game.GameDifficulty
 import com.example.bugs.domain.game.GameRound
 import com.example.bugs.domain.game.GameSettings
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 enum class GamePhase {
     READY,
     RUNNING,
+    CHOOSING,
     PAUSED,
     FINISHED
 }
@@ -125,7 +128,7 @@ class GameViewModel(
 
         if (
             current.device.loading || current.device.error || current.settingsSaving ||
-            current.phase == GamePhase.RUNNING || current.phase == GamePhase.PAUSED ||
+            current.phase == GamePhase.RUNNING || current.phase == GamePhase.CHOOSING || current.phase == GamePhase.PAUSED ||
             (current.result != null && current.saveStatus != SaveStatus.SAVED)
         ) return
 
@@ -187,17 +190,41 @@ class GameViewModel(
         return selected
     }
 
-    fun tap(x: Float, y: Float, nanos: Long): Int? {
+    fun tap(x: Float, y: Float, nanos: Long): AttackResult? {
         frame(nanos)
         if (state.value.phase != GamePhase.RUNNING) return null
-        val points = state.value.round?.tap(x, y)
+        val result = state.value.round?.tap(x, y)
         publish()
 
-        return points
+        return result
+    }
+
+    fun buyAbility(ability: GameAbility) {
+        if (state.value.phase != GamePhase.CHOOSING) return
+        if (state.value.round?.buyAbility(ability) != true) return
+
+        lastFrame = null
+        state.value = state.value.copy(phase = GamePhase.RUNNING)
+        publish()
+    }
+
+    fun skipOffer() {
+        if (state.value.phase != GamePhase.CHOOSING) return
+        if (state.value.round?.skipOffer() != true) return
+
+        lastFrame = null
+        state.value = state.value.copy(phase = GamePhase.RUNNING)
+        publish()
     }
 
     private fun publish() {
         val round = state.value.round ?: return
+
+        if (round.offer.isNotEmpty() && state.value.phase == GamePhase.RUNNING) {
+            round.setTilt(0f, 0f)
+            lastFrame = null
+            state.value = state.value.copy(phase = GamePhase.CHOOSING)
+        }
 
         if (round.finished && state.value.phase != GamePhase.FINISHED) {
             val result = ResultEntity(

@@ -1,9 +1,12 @@
 package com.example.bugs.feature.game.ui
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.Choreographer
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -12,11 +15,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.bugs.MainActivity
 import com.example.bugs.R
 import com.example.bugs.core.ui.gameModeLabel
+import com.example.bugs.domain.game.GameAbility
 import com.example.bugs.feature.game.presentation.GamePhase
 import com.example.bugs.feature.game.presentation.GameUiState
 import com.example.bugs.feature.game.presentation.GameViewModel
 import com.example.bugs.feature.game.presentation.SaveStatus
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 import kotlin.math.ceil
 import kotlinx.coroutines.launch
@@ -43,6 +48,12 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
         field.onTap = { x, y -> model.tap(x, y, System.nanoTime()) }
         field.onBonusTap = { x, y -> model.tapBonus(x, y, System.nanoTime()) }
         action.setOnClickListener { performAction(field) }
+        val offer = view.findViewById<View>(R.id.ability_offer)
+        val cards = listOf(
+            view.findViewById<MaterialCardView>(R.id.ability_first),
+            view.findViewById<MaterialCardView>(R.id.ability_second)
+        )
+        view.findViewById<View>(R.id.ability_skip).setOnClickListener { model.skipOffer() }
 
         fun render(state: GameUiState) {
             field.round = state.round
@@ -71,7 +82,16 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
                 status.append("\n" + getString(R.string.game_tilt_active, tiltRemaining))
             }
             updateTilt()
-            overlay.isVisible = state.phase != GamePhase.RUNNING
+            val choosing = state.phase == GamePhase.CHOOSING
+            offer.isVisible = choosing
+            field.importantForAccessibility = if (choosing) View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                else View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            overlay.isVisible = state.phase != GamePhase.RUNNING && !choosing
+            if (choosing) {
+                state.round?.offer?.forEachIndexed { index, ability ->
+                    bindAbility(cards[index], ability, state.round.score)
+                }
+            }
             action.isEnabled = when (state.phase) {
                 GamePhase.READY -> !state.device.loading && !state.settingsSaving
                 GamePhase.FINISHED -> state.saveStatus == SaveStatus.ERROR ||
@@ -110,7 +130,7 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
                     )
                 }
 
-                GamePhase.RUNNING -> Unit
+                GamePhase.RUNNING, GamePhase.CHOOSING -> Unit
             }
         }
 
@@ -120,6 +140,27 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
                 model.uiState.collect { render(it) }
             }
         }
+    }
+
+    private fun bindAbility(card: MaterialCardView, ability: GameAbility, score: Int) {
+        val affordable = score >= ability.price
+        val accent = ContextCompat.getColor(requireContext(), ability.color)
+        card.isEnabled = affordable
+        card.alpha = if (affordable) 1f else .45f
+        card.strokeColor = accent
+        card.findViewById<ImageView>(R.id.ability_icon).apply {
+            setImageResource(ability.icon)
+            imageTintList = ColorStateList.valueOf(accent)
+        }
+        card.findViewById<TextView>(R.id.ability_name).setText(ability.label)
+        card.findViewById<TextView>(R.id.ability_cost).text = getString(R.string.ability_price, ability.price)
+        card.findViewById<View>(R.id.ability_lock).isVisible = !affordable
+        card.contentDescription = if (affordable) {
+            getString(ability.label) + ", " + getString(R.string.ability_price, ability.price)
+        } else {
+            getString(R.string.ability_locked, getString(ability.label), ability.price)
+        }
+        card.setOnClickListener { model.buyAbility(ability) }
     }
 
     private fun performAction(field: GameFieldView) {
@@ -213,7 +254,11 @@ class GameFragment : Fragment(R.layout.fragment_game), Choreographer.FrameCallba
     private fun updateTilt() {
         val state = model.uiState.value
         tilt?.setRunning(isResumed && state.phase == GamePhase.RUNNING)
-        tilt?.updateSound((state.round?.tiltRemaining ?: 0.0) > 0)
+        tilt?.updateSound(
+            isResumed && state.phase == GamePhase.RUNNING &&
+                (state.round?.tiltRemaining ?: 0.0) > 0 &&
+                (state.round?.abilityRemaining(GameAbility.FREEZE) ?: 0.0) == 0.0
+        )
     }
 
     override fun onDestroyView() {

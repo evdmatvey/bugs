@@ -83,5 +83,6 @@
                 </LinearLayout>
             </ScrollView>
         </com.google.android.material.card.MaterialCardView>
+        <include layout="@layout/ability_offer" />
     </FrameLayout>
 </LinearLayout>
