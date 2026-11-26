@@ -1,0 +1,8 @@
+<resources>
+    <color name="ability_bait">#F4C15D</color>
+    <color name="ability_slow">#C5ACF0</color>
+    <color name="ability_freeze">#81D9F1</color>
+    <color name="ability_multitouch">#F2A1CA</color>
+    <color name="ability_bomb">#FFB184</color>
+    <color name="ability_chain">#70D9CB</color>
+</resources>

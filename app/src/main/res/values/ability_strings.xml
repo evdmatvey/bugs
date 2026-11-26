@@ -1,0 +1,12 @@
+<resources>
+    <string name="ability_choose">Выберите способность</string>
+    <string name="ability_skip">Пропустить</string>
+    <string name="ability_price">%1$d очков</string>
+    <string name="ability_bait">Приманка</string>
+    <string name="ability_slow">Замедление</string>
+    <string name="ability_freeze">Заморозка</string>
+    <string name="ability_multitouch">Мультитач-удар</string>
+    <string name="ability_bomb">Бомба</string>
+    <string name="ability_chain">Цепная реакция</string>
+    <string name="ability_locked">%1$s, %2$d очков. Недостаточно очков</string>
+</resources>
