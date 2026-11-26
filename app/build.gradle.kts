@@ -53,4 +53,5 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.viewpager2)
     implementation(libs.material)
+    testImplementation(libs.junit)
 }
